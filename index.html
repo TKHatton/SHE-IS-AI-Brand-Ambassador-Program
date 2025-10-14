@@ -234,15 +234,22 @@
     </div>
   </div>
 
-  <script src="./script.js"></script>
-
     <!-- ChatKit Loader for SHE IS AI Onboarding Bot -->
+   <!-- 1️⃣ ChatKit loader -->
+  <script
+    src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js"
+    async
+  ></script>
+
+  <!-- 2️⃣ Your domain public key -->
   <script
     async
     src="https://chat.openai.com/chatkit.js"
     data-domain-public-key="domain_pk_68ee67d0f8a48190bd965ad0b6c162e90d67d5421802d6c4">
   </script>
 
+  <!-- 3️⃣ Your site logic -->
   <script src="./script.js"></script>
 </body>
 </html>
+

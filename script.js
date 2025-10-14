@@ -81,9 +81,12 @@ $$('[data-zoom]').forEach(card => {
 if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 if (modalClose) modalClose.addEventListener("click", closeModal);
 
-// ---------- BOT (ChatKit) ----------
+// ---------- BOT (ChatKit Widget) ----------
 const WORKFLOW_ID = "wf_68edd48e5e788190b178f7d9e981a00e065480baae7782e9";
-const WORKFLOW_VERSION = "2"; // leave "" to use production
+const WORKFLOW_VERSION = "2";
+
+let chatkitInstance = null;
+let isWidgetOpen = false;
 
 function getChatKit() {
   return window.ChatKit || window.chatkit || window.OpenAIChatKit || null;
@@ -95,39 +98,166 @@ function waitForChatKit(maxMs = 10000) {
     (function tick() {
       const ck = getChatKit();
       if (ck) return resolve(ck);
-      if (Date.now() - t0 > maxMs) return reject(new Error("ChatKit loader not found"));
+      if (Date.now() - t0 > maxMs) return reject(new Error("ChatKit not loaded"));
       setTimeout(tick, 150);
     })();
   });
 }
 
-async function openBot() {
-  try {
-    const chatkit = await waitForChatKit();
-    if (typeof chatkit.init === "function") chatkit.init({});
-    const opts = { workflowId: WORKFLOW_ID };
-    if (WORKFLOW_VERSION && WORKFLOW_VERSION !== "") opts.version = WORKFLOW_VERSION;
-    if (typeof chatkit.open === "function") {
-      chatkit.open(opts);
-    } else {
-      alert("ChatKit is loaded but 'open' isn’t available. Re-check the Quickstart usage.");
-    }
-  } catch (err) {
-    alert(
-      "The bot UI isn’t loaded yet.\n\n" +
-      "Check these:\n" +
-      "• Get code → ChatKit: your Netlify origin is in Allowed Domains\n" +
-      "• The single loader tag is in index.html with your data-domain-public-key\n" +
-      "• Hard refresh (Ctrl/Cmd+Shift+R) or try an Incognito window"
-    );
-    console.error(err);
+// Create widget container
+function createWidgetContainer() {
+  if (document.getElementById('chatkit-widget-container')) return;
+  
+  const container = document.createElement('div');
+  container.id = 'chatkit-widget-container';
+  container.style.cssText = `
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 400px;
+    height: 600px;
+    max-width: calc(100vw - 40px);
+    max-height: calc(100vh - 120px);
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  `;
+  
+  // Add header with close button
+  const header = document.createElement('div');
+  header.style.cssText = `
+    background: rgb(124, 58, 237);
+    color: white;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 16px 16px 0 0;
+  `;
+  header.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 20px;">💬</span>
+      <span style="font-weight: 600;">Onboarding Assistant</span>
+    </div>
+    <button id="chatkit-close-btn" style="
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    ">×</button>
+  `;
+  
+  // Add ChatKit container
+  const chatkitWrapper = document.createElement('div');
+  chatkitWrapper.id = 'chatkit-wrapper';
+  chatkitWrapper.style.cssText = `
+    flex: 1;
+    overflow: hidden;
+    background: white;
+  `;
+  
+  container.appendChild(header);
+  container.appendChild(chatkitWrapper);
+  document.body.appendChild(container);
+  
+  // Close button handler
+  document.getElementById('chatkit-close-btn').addEventListener('click', closeWidget);
+}
+
+function closeWidget() {
+  const container = document.getElementById('chatkit-widget-container');
+  if (container) {
+    container.style.display = 'none';
+    isWidgetOpen = false;
   }
 }
 
+async function openWidget() {
+  try {
+    createWidgetContainer();
+    const container = document.getElementById('chatkit-widget-container');
+    const wrapper = document.getElementById('chatkit-wrapper');
+    
+    container.style.display = 'flex';
+    isWidgetOpen = true;
+    
+    // If ChatKit already initialized, just show it
+    if (chatkitInstance) return;
+    
+    const chatkit = await waitForChatKit();
+    
+    // Initialize ChatKit
+    if (typeof chatkit.init === 'function') {
+      chatkit.init({
+        theme: {
+          colorScheme: 'light',
+          color: {
+            grayscale: { hue: 220, tint: 6, shade: -4 },
+            accent: { primary: '#0f172a', level: 1 }
+          },
+          radius: 'round'
+        },
+        startScreen: {
+          greeting: 'Welcome to SHE IS AI Ambassador Onboarding! How can I help you?',
+          prompts: [
+            { label: 'Tell me about benefits', prompt: 'What are the ambassador benefits?', icon: 'gift' },
+            { label: 'What are expectations?', prompt: 'What are the expectations?', icon: 'list' },
+            { label: 'How do I get started?', prompt: 'How do I get started as an ambassador?', icon: 'rocket' }
+          ]
+        },
+        composer: {
+          placeholder: 'Ask about the program...',
+          attachments: { enabled: true }
+        }
+      });
+    }
+    
+    // Open ChatKit with workflow
+    const opts = { 
+      workflowId: WORKFLOW_ID,
+      container: wrapper // Mount in our widget
+    };
+    if (WORKFLOW_VERSION) opts.version = WORKFLOW_VERSION;
+    
+    if (typeof chatkit.open === 'function') {
+      chatkitInstance = chatkit.open(opts);
+    }
+    
+  } catch (err) {
+    console.error('Widget error:', err);
+    alert('Unable to load the assistant. Please refresh and try again.');
+  }
+}
+
+// Update FAB button
 const fab = $("#agent-fab");
 if (fab) {
   fab.addEventListener("click", (e) => {
     e.preventDefault();
-    openBot();
+    if (isWidgetOpen) {
+      closeWidget();
+    } else {
+      openWidget();
+    }
   });
 }
+
+// Close widget when clicking outside
+document.addEventListener('click', (e) => {
+  const container = document.getElementById('chatkit-widget-container');
+  const fab = document.getElementById('agent-fab');
+  if (isWidgetOpen && container && !container.contains(e.target) && e.target !== fab) {
+    // Don't close immediately - user might be interacting
+  }
+});

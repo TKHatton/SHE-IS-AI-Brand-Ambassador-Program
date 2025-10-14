@@ -1,0 +1,12 @@
+# SHE IS AI — Ambassador Onboarding (POC)
+
+A minimal, static microsite for the Brand Ambassador Program.
+Built for GitHub Pages / Netlify. Tailwind via CDN. No build step.
+
+## Files
+- `index.html` — single page site
+- `script.js` — basic interactivity + agent link
+- (no CSS file; Tailwind CDN is used)
+
+## Agent Link
+We use your workflow ID to construct a best-effort link:

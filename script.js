@@ -1,19 +1,21 @@
-// ---------- Helpers ----------
-const $ = (q) => document.querySelector(q);
-const $$ = (q) => document.querySelectorAll(q);
+// ---------- SAFE HELPERS (idempotent) ----------
+window.$ ||= (q) => document.querySelector(q);
+window.$$ ||= (q) => document.querySelectorAll(q);
+const $ = window.$;
+const $$ = window.$$;
 
 // Footer year
 const yearEl = $("#year");
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-// ---------- LINKS: your real links are set here ----------
+// ---------- LINKS (your real URLs) ----------
 const LINKS = {
   SKOOL_URL: "https://www.skool.com/she-is-ai-community/about?ref=284558cf933e4a1fbb1d52ec9ceb9b33",
   BADGE_URL: "https://www.canva.com/design/DAGbpR6dP2o/iS1VtNQe4AH9BkwVR82v-w/view?utm_content=DAGbpR6dP2o&utm_campaign=designshare&utm_medium=link&utm_source=publishsharelink&mode=preview",
   ZOOM_URL: "https://us06web.zoom.us/j/85250761078?pwd=m5Y4SmLT194D5jLft99UQ14EiRJoh9.1&jst=2",
-  EXPECTATIONS_URL: "#",   // optional external page (leave as "#" to scroll to section)
-  BENEFITS_URL: "#",       // optional external page
-  NEXT_STEPS_URL: "#",     // optional external page
+  EXPECTATIONS_URL: "#",
+  BENEFITS_URL: "#",
+  NEXT_STEPS_URL: "#",
   SCHOLAR_EMAIL: "mailto:amanda@sheisai.ai",
 };
 
@@ -31,7 +33,7 @@ const linkMap = {
   "#link-expect": defaultOrSection(LINKS.EXPECTATIONS_URL, "#expectations"),
   "#link-badge": LINKS.BADGE_URL,
   "#link-weekly": LINKS.ZOOM_URL,
-  // Add later if you create buttons:
+  // Optional future:
   // "#link-benefits": defaultOrSection(LINKS.BENEFITS_URL, "#benefits"),
   // "#link-next": defaultOrSection(LINKS.NEXT_STEPS_URL, "#next-steps"),
 };
@@ -86,13 +88,13 @@ if (modalClose) modalClose.addEventListener("click", closeModal);
 
 // ---------- BOT (ChatKit) ----------
 const WORKFLOW_ID = "wf_68edd48e5e788190b178f7d9e981a00e065480baae7782e9"; // your workflow ID
-const WORKFLOW_VERSION = ""; // leave empty to use Production
+const WORKFLOW_VERSION = "2"; // your Get Code shows version="2"; set "" to use production default
 
 function getChatKit() {
   return window.ChatKit || window.chatkit || window.OpenAIChatKit || null;
 }
 
-// Wait up to ~10s for ChatKit loader to appear
+// Wait up to 10s for ChatKit loader to appear
 function waitForChatKit(maxMs = 10000) {
   return new Promise((resolve, reject) => {
     const start = Date.now();
@@ -121,14 +123,14 @@ async function openBot() {
       "The bot UI isn’t loaded yet.\n\n" +
       "Check these:\n" +
       "• Agent Builder → Get code → ChatKit → Add Domain (your exact Netlify URL)\n" +
-      "• Paste the ChatKit <script> with your data-domain-public-key into index.html (above </body>)\n" +
+      "• BOTH loader scripts are in index.html (see below)\n" +
       "• Hard refresh the site (Ctrl/Cmd+Shift+R)"
     );
     console.error(err);
   }
 }
 
-const fab = $("#agent-fab"); // button text says “Onboarding Bot”
+const fab = $("#agent-fab"); // button text says “Onboarding Agent/Bot”
 if (fab) {
   fab.addEventListener("click", (e) => {
     e.preventDefault();

@@ -6,14 +6,14 @@ const $$ = (q) => document.querySelectorAll(q);
 const yearEl = $("#year");
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-// ---------- LINKS: put your real URLs here ----------
+// ---------- LINKS: your real links are set here ----------
 const LINKS = {
-  SKOOL_URL: "https://www.skool.com/she-is-ai-community/about?ref=284558cf933e4a1fbb1d52ec9ceb9b33",              // your Skool link (can include affiliate)
-  BADGE_URL: "https://www.canva.com/design/DAGbpR6dP2o/iS1VtNQe4AH9BkwVR82v-w/view?utm_content=DAGbpR6dP2o&utm_campaign=designshare&utm_medium=link&utm_source=publishsharelink&mode=preview",              // Ambassador badge link
-  ZOOM_URL: "https://us06web.zoom.us/j/85250761078?pwd=m5Y4SmLT194D5jLft99UQ14EiRJoh9.1&jst=2",               // weekly call link
-  EXPECTATIONS_URL: "#",       // optional external page
-  BENEFITS_URL: "#",           // optional external page
-  NEXT_STEPS_URL: "#",         // optional external page
+  SKOOL_URL: "https://www.skool.com/she-is-ai-community/about?ref=284558cf933e4a1fbb1d52ec9ceb9b33",
+  BADGE_URL: "https://www.canva.com/design/DAGbpR6dP2o/iS1VtNQe4AH9BkwVR82v-w/view?utm_content=DAGbpR6dP2o&utm_campaign=designshare&utm_medium=link&utm_source=publishsharelink&mode=preview",
+  ZOOM_URL: "https://us06web.zoom.us/j/85250761078?pwd=m5Y4SmLT194D5jLft99UQ14EiRJoh9.1&jst=2",
+  EXPECTATIONS_URL: "#",   // optional external page (leave as "#" to scroll to section)
+  BENEFITS_URL: "#",       // optional external page
+  NEXT_STEPS_URL: "#",     // optional external page
   SCHOLAR_EMAIL: "mailto:amanda@sheisai.ai",
 };
 
@@ -23,15 +23,15 @@ function defaultOrSection(url, sectionHash) {
   return sectionHash;
 }
 
-// Apply links safely (map IDs → URLs)
+// Map IDs → URLs and apply safely
 const linkMap = {
   "#link-skool": LINKS.SKOOL_URL,
-  "#link-skool-2": LINKS.SKOOL_URL,              // Next Steps link
+  "#link-skool-2": LINKS.SKOOL_URL, // Next Steps link
   "#link-scholar": LINKS.SCHOLAR_EMAIL,
   "#link-expect": defaultOrSection(LINKS.EXPECTATIONS_URL, "#expectations"),
   "#link-badge": LINKS.BADGE_URL,
   "#link-weekly": LINKS.ZOOM_URL,
-  // Optionally add later:
+  // Add later if you create buttons:
   // "#link-benefits": defaultOrSection(LINKS.BENEFITS_URL, "#benefits"),
   // "#link-next": defaultOrSection(LINKS.NEXT_STEPS_URL, "#next-steps"),
 };
@@ -86,42 +86,49 @@ if (modalClose) modalClose.addEventListener("click", closeModal);
 
 // ---------- BOT (ChatKit) ----------
 const WORKFLOW_ID = "wf_68edd48e5e788190b178f7d9e981a00e065480baae7782e9"; // your workflow ID
-const WORKFLOW_VERSION = "1"; // from "Current version" field; omit or set "" to use production
-const fab = $("#agent-fab"); // button label already says "Onboarding Bot" in HTML
+const WORKFLOW_VERSION = ""; // leave empty to use Production
 
-function openBot() {
-  // The loader you paste from Agent Builder exposes one of these:
-  const chatkit = window.ChatKit || window.chatkit || window.OpenAIChatKit;
+function getChatKit() {
+  return window.ChatKit || window.chatkit || window.OpenAIChatKit || null;
+}
 
-  if (chatkit && (typeof chatkit.open === "function" || typeof chatkit.init === "function")) {
-    // Some loaders support open() directly; some want init() then open()
-    try {
-      if (typeof chatkit.init === "function") {
-        chatkit.init({});
-      }
-      if (typeof chatkit.open === "function") {
-        const opts = { workflowId: WORKFLOW_ID };
-        if (WORKFLOW_VERSION && WORKFLOW_VERSION !== "") opts.version = WORKFLOW_VERSION;
-        chatkit.open(opts);
-      } else {
-        alert("ChatKit is loaded but 'open' isn’t available. Re-check the embed snippet from Agent Builder.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("ChatKit threw an error while opening the bot. Check the console and your embed snippet.");
+// Wait up to ~10s for ChatKit loader to appear
+function waitForChatKit(maxMs = 10000) {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    (function check() {
+      const ck = getChatKit();
+      if (ck) return resolve(ck);
+      if (Date.now() - start > maxMs) return reject(new Error("ChatKit loader not found"));
+      setTimeout(check, 150);
+    })();
+  });
+}
+
+async function openBot() {
+  try {
+    const chatkit = await waitForChatKit();
+    if (typeof chatkit.init === "function") chatkit.init({});
+    const opts = { workflowId: WORKFLOW_ID };
+    if (WORKFLOW_VERSION && WORKFLOW_VERSION !== "") opts.version = WORKFLOW_VERSION;
+    if (typeof chatkit.open === "function") {
+      chatkit.open(opts);
+    } else {
+      alert("ChatKit is loaded but 'open' isn’t available. Re-check the embed snippet from Agent Builder.");
     }
-  } else {
+  } catch (err) {
     alert(
       "The bot UI isn’t loaded yet.\n\n" +
-      "Do this once:\n" +
-      "1) In Agent Builder → Get code → ChatKit → click Quickstart.\n" +
-      "2) Copy the <script> loader snippet and paste it just before </body> in index.html.\n" +
-      "3) In Get code, click Add Domain and allow-list your Netlify URL.\n" +
-      "Then click the button again."
+      "Check these:\n" +
+      "• Agent Builder → Get code → ChatKit → Add Domain (your exact Netlify URL)\n" +
+      "• Paste the ChatKit <script> with your data-domain-public-key into index.html (above </body>)\n" +
+      "• Hard refresh the site (Ctrl/Cmd+Shift+R)"
     );
+    console.error(err);
   }
 }
 
+const fab = $("#agent-fab"); // button text says “Onboarding Bot”
 if (fab) {
   fab.addEventListener("click", (e) => {
     e.preventDefault();

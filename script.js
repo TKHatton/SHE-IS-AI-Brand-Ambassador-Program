@@ -8,7 +8,7 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
 
 // ---------- LINKS: put your real URLs here ----------
 const LINKS = {
-  SKOOL_URL: "https://www.skool.com/she-is-ai-community/about?ref=284558cf933e4a1fbb1d52ec9ceb9b33",              // your Skool link (with affiliate if desired)
+  SKOOL_URL: "https://www.skool.com/she-is-ai-community/about?ref=284558cf933e4a1fbb1d52ec9ceb9b33",              // your Skool link (can include affiliate)
   BADGE_URL: "https://www.canva.com/design/DAGbpR6dP2o/iS1VtNQe4AH9BkwVR82v-w/view?utm_content=DAGbpR6dP2o&utm_campaign=designshare&utm_medium=link&utm_source=publishsharelink&mode=preview",              // Ambassador badge link
   ZOOM_URL: "https://us06web.zoom.us/j/85250761078?pwd=m5Y4SmLT194D5jLft99UQ14EiRJoh9.1&jst=2",               // weekly call link
   EXPECTATIONS_URL: "#",       // optional external page
@@ -26,7 +26,7 @@ function defaultOrSection(url, sectionHash) {
 // Apply links safely (map IDs → URLs)
 const linkMap = {
   "#link-skool": LINKS.SKOOL_URL,
-  "#link-skool-2": LINKS.SKOOL_URL,              // NEW: Next Steps link
+  "#link-skool-2": LINKS.SKOOL_URL,              // Next Steps link
   "#link-scholar": LINKS.SCHOLAR_EMAIL,
   "#link-expect": defaultOrSection(LINKS.EXPECTATIONS_URL, "#expectations"),
   "#link-badge": LINKS.BADGE_URL,
@@ -84,28 +84,40 @@ $$('[data-zoom]').forEach(card => {
 if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 if (modalClose) modalClose.addEventListener("click", closeModal);
 
-// ---------- Agent (ChatKit) ----------
-const WORKFLOW_ID = "wf_68edd48e5e788190b178f7d9e981a00e065480baae7782e9"; // your Agent Builder workflow ID
-const fab = $("#agent-fab");
+// ---------- BOT (ChatKit) ----------
+const WORKFLOW_ID = "wf_68edd48e5e788190b178f7d9e981a00e065480baae7782e9"; // your workflow ID
+const WORKFLOW_VERSION = "1"; // from "Current version" field; omit or set "" to use production
+const fab = $("#agent-fab"); // button label already says "Onboarding Bot" in HTML
 
-function openAgent() {
+function openBot() {
+  // The loader you paste from Agent Builder exposes one of these:
   const chatkit = window.ChatKit || window.chatkit || window.OpenAIChatKit;
-  if (chatkit && typeof chatkit.open === "function") {
-    chatkit.open({ workflowId: WORKFLOW_ID });
-  } else if (chatkit && typeof chatkit.init === "function") {
+
+  if (chatkit && (typeof chatkit.open === "function" || typeof chatkit.init === "function")) {
+    // Some loaders support open() directly; some want init() then open()
     try {
-      chatkit.init({ workflowId: WORKFLOW_ID });
-      if (typeof chatkit.open === "function") chatkit.open({ workflowId: WORKFLOW_ID });
+      if (typeof chatkit.init === "function") {
+        chatkit.init({});
+      }
+      if (typeof chatkit.open === "function") {
+        const opts = { workflowId: WORKFLOW_ID };
+        if (WORKFLOW_VERSION && WORKFLOW_VERSION !== "") opts.version = WORKFLOW_VERSION;
+        chatkit.open(opts);
+      } else {
+        alert("ChatKit is loaded but 'open' isn’t available. Re-check the embed snippet from Agent Builder.");
+      }
     } catch (err) {
-      alert("ChatKit is present but not ready. Check the embed snippet from Agent Builder and try again.");
+      console.error(err);
+      alert("ChatKit threw an error while opening the bot. Check the console and your embed snippet.");
     }
   } else {
     alert(
-      "The agent UI isn’t loaded yet.\n\n" +
-      "Next step:\n" +
-      "1) In Agent Builder, click Get code (or Add to site) to copy the ChatKit <script> loader.\n" +
-      "2) Paste that <script> just before </body> in index.html.\n" +
-      "3) No URL needed here — we already use your workflow ID."
+      "The bot UI isn’t loaded yet.\n\n" +
+      "Do this once:\n" +
+      "1) In Agent Builder → Get code → ChatKit → click Quickstart.\n" +
+      "2) Copy the <script> loader snippet and paste it just before </body> in index.html.\n" +
+      "3) In Get code, click Add Domain and allow-list your Netlify URL.\n" +
+      "Then click the button again."
     );
   }
 }
@@ -113,6 +125,6 @@ function openAgent() {
 if (fab) {
   fab.addEventListener("click", (e) => {
     e.preventDefault();
-    openAgent();
+    openBot();
   });
 }

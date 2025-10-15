@@ -13,9 +13,9 @@ const LINKS = {
   SKOOL_URL: "https://www.skool.com/she-is-ai-community/about?ref=284558cf933e4a1fbb1d52ec9ceb9b33",
   BADGE_URL: "https://www.canva.com/design/DAGbpR6dP2o/iS1VtNQe4AH9BkwVR82v-w/view?utm_content=DAGbpR6dP2o&utm_campaign=designshare&utm_medium=link&utm_source=publishsharelink&mode=preview",
   ZOOM_URL: "https://us06web.zoom.us/j/85250761078?pwd=m5Y4SmLT194D5jLft99UQ14EiRJoh9.1&jst=2",
-  EXPECTATIONS_URL: "#",
-  BENEFITS_URL: "#",
-  NEXT_STEPS_URL: "#",
+  EXPECTATIONS_URL: "#expectations",
+  BENEFITS_URL: "#benefits",
+  NEXT_STEPS_URL: "#next-steps",
   SCHOLAR_EMAIL: "mailto:amanda@sheisai.ai",
 };
 
@@ -81,30 +81,12 @@ $$('[data-zoom]').forEach(card => {
 if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 if (modalClose) modalClose.addEventListener("click", closeModal);
 
-// ---------- BOT (ChatKit Widget) ----------
-const WORKFLOW_ID = "wf_68edd48e5e788190b178f7d9e981a00e065480baae7782e9";
-const WORKFLOW_VERSION = "2";
-
-let chatkitInstance = null;
+// ---------- CHATBOT WIDGET ----------
 let isWidgetOpen = false;
+let messages = [];
+let threadId = null;
+let isLoading = false;
 
-function getChatKit() {
-  return window.ChatKit || window.chatkit || window.OpenAIChatKit || null;
-}
-
-function waitForChatKit(maxMs = 10000) {
-  return new Promise((resolve, reject) => {
-    const t0 = Date.now();
-    (function tick() {
-      const ck = getChatKit();
-      if (ck) return resolve(ck);
-      if (Date.now() - t0 > maxMs) return reject(new Error("ChatKit not loaded"));
-      setTimeout(tick, 150);
-    })();
-  });
-}
-
-// Create widget container
 function createWidgetContainer() {
   if (document.getElementById('chatkit-widget-container')) return;
   
@@ -127,52 +109,87 @@ function createWidgetContainer() {
     overflow: hidden;
   `;
   
-  // Add header with close button
-  const header = document.createElement('div');
-  header.style.cssText = `
-    background: rgb(124, 58, 237);
-    color: white;
-    padding: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-radius: 16px 16px 0 0;
-  `;
-  header.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <span style="font-size: 20px;">💬</span>
-      <span style="font-weight: 600;">Onboarding Assistant</span>
-    </div>
-    <button id="chatkit-close-btn" style="
-      background: rgba(255,255,255,0.2);
-      border: none;
+  container.innerHTML = `
+    <div style="
+      background: rgb(124, 58, 237);
       color: white;
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 20px;
+      padding: 16px;
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-    ">×</button>
+      border-radius: 16px 16px 0 0;
+    ">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 20px;">💬</span>
+        <span style="font-weight: 600;">Onboarding Assistant</span>
+      </div>
+      <button id="chatkit-close-btn" style="
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+      ">×</button>
+    </div>
+    
+    <div id="chat-messages" style="
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    "></div>
+    
+    <div style="
+      padding: 16px;
+      border-top: 1px solid #e2e8f0;
+      background: white;
+    ">
+      <div style="display: flex; gap: 8px;">
+        <input 
+          id="chat-input"
+          type="text" 
+          placeholder="Type your message..."
+          style="
+            flex: 1;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 14px;
+            outline: none;
+          "
+        />
+        <button id="chat-send" style="
+          background: rgb(124, 58, 237);
+          border: none;
+          color: white;
+          padding: 10px 16px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+        ">Send</button>
+      </div>
+    </div>
   `;
   
-  // Add ChatKit container
-  const chatkitWrapper = document.createElement('div');
-  chatkitWrapper.id = 'chatkit-wrapper';
-  chatkitWrapper.style.cssText = `
-    flex: 1;
-    overflow: hidden;
-    background: white;
-  `;
-  
-  container.appendChild(header);
-  container.appendChild(chatkitWrapper);
   document.body.appendChild(container);
   
-  // Close button handler
+  // Event listeners
   document.getElementById('chatkit-close-btn').addEventListener('click', closeWidget);
+  document.getElementById('chat-send').addEventListener('click', sendMessage);
+  document.getElementById('chat-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
 }
 
 function closeWidget() {
@@ -183,66 +200,110 @@ function closeWidget() {
   }
 }
 
-async function openWidget() {
-  try {
-    createWidgetContainer();
-    const container = document.getElementById('chatkit-widget-container');
-    const wrapper = document.getElementById('chatkit-wrapper');
-    
-    container.style.display = 'flex';
-    isWidgetOpen = true;
-    
-    // If ChatKit already initialized, just show it
-    if (chatkitInstance) return;
-    
-    const chatkit = await waitForChatKit();
-    
-    // Initialize ChatKit
-    if (typeof chatkit.init === 'function') {
-      chatkit.init({
-        theme: {
-          colorScheme: 'light',
-          color: {
-            grayscale: { hue: 220, tint: 6, shade: -4 },
-            accent: { primary: '#0f172a', level: 1 }
-          },
-          radius: 'round'
-        },
-        startScreen: {
-          greeting: 'Welcome to SHE IS AI Ambassador Onboarding! How can I help you?',
-          prompts: [
-            { label: 'Tell me about benefits', prompt: 'What are the ambassador benefits?', icon: 'gift' },
-            { label: 'What are expectations?', prompt: 'What are the expectations?', icon: 'list' },
-            { label: 'How do I get started?', prompt: 'How do I get started as an ambassador?', icon: 'rocket' }
-          ]
-        },
-        composer: {
-          placeholder: 'Ask about the program...',
-          attachments: { enabled: true }
-        }
-      });
-    }
-    
-    // Open ChatKit with workflow
-    const opts = { 
-      workflowId: WORKFLOW_ID,
-      container: wrapper // Mount in our widget
-    };
-    if (WORKFLOW_VERSION) opts.version = WORKFLOW_VERSION;
-    
-    if (typeof chatkit.open === 'function') {
-      chatkitInstance = chatkit.open(opts);
-    }
-    
-  } catch (err) {
-    console.error('Widget error:', err);
-    alert('Unable to load the assistant. Please refresh and try again.');
+function openWidget() {
+  createWidgetContainer();
+  const container = document.getElementById('chatkit-widget-container');
+  container.style.display = 'flex';
+  isWidgetOpen = true;
+  
+  // Show welcome message if first time
+  if (messages.length === 0) {
+    addMessage('assistant', 'Hi! I\'m the She Is AI Ambassador Onboarding Agent. I can answer questions about requirements, benefits, costs, and next steps. What\'s your first name?');
   }
 }
 
-// Update FAB button
+function addMessage(role, content) {
+  messages.push({ role, content });
+  renderMessages();
+}
+
+function renderMessages() {
+  const container = document.getElementById('chat-messages');
+  if (!container) return;
+  
+  container.innerHTML = messages.map(msg => {
+    const isUser = msg.role === 'user';
+    return `
+      <div style="
+        display: flex;
+        justify-content: ${isUser ? 'flex-end' : 'flex-start'};
+      ">
+        <div style="
+          max-width: 80%;
+          padding: 10px 14px;
+          border-radius: 12px;
+          background: ${isUser ? 'rgb(124, 58, 237)' : 'white'};
+          color: ${isUser ? 'white' : '#1e293b'};
+          font-size: 14px;
+          line-height: 1.5;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        ">
+          ${msg.content.replace(/\n/g, '<br>')}
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  // Add loading indicator if needed
+  if (isLoading) {
+    container.innerHTML += `
+      <div style="display: flex; justify-content: flex-start;">
+        <div style="
+          padding: 10px 14px;
+          border-radius: 12px;
+          background: white;
+          color: #64748b;
+          font-size: 14px;
+        ">
+          <span style="animation: pulse 1.5s ease-in-out infinite;">Thinking...</span>
+        </div>
+      </div>
+    `;
+  }
+  
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const message = input.value.trim();
+  
+  if (!message || isLoading) return;
+  
+  input.value = '';
+  addMessage('user', message);
+  
+  isLoading = true;
+  renderMessages();
+  
+  try {
+    const response = await fetch('/.netlify/functions/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, threadId })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to get response');
+    }
+    
+    const data = await response.json();
+    threadId = data.threadId;
+    addMessage('assistant', data.response);
+    
+  } catch (error) {
+    console.error('Error:', error);
+    addMessage('assistant', 'Sorry, I encountered an error. Please try again or email sheisai@sheisai.ai for help.');
+  } finally {
+    isLoading = false;
+    renderMessages();
+  }
+}
+
+// FAB button
 const fab = $("#agent-fab");
 if (fab) {
+  fab.removeAttribute('aria-disabled');
   fab.addEventListener("click", (e) => {
     e.preventDefault();
     if (isWidgetOpen) {
@@ -252,12 +313,3 @@ if (fab) {
     }
   });
 }
-
-// Close widget when clicking outside
-document.addEventListener('click', (e) => {
-  const container = document.getElementById('chatkit-widget-container');
-  const fab = document.getElementById('agent-fab');
-  if (isWidgetOpen && container && !container.contains(e.target) && e.target !== fab) {
-    // Don't close immediately - user might be interacting
-  }
-});

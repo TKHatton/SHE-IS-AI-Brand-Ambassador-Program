@@ -81,7 +81,7 @@ $$('[data-zoom]').forEach(card => {
 if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 if (modalClose) modalClose.addEventListener("click", closeModal);
 
-// ---------- CHATBOT WIDGET ----------
+// ---------- SHE IS AI BRANDED CHATBOT ----------
 let isWidgetOpen = false;
 let messages = [];
 let threadId = null;
@@ -94,90 +94,120 @@ function createWidgetContainer() {
   container.id = 'chatkit-widget-container';
   container.style.cssText = `
     position: fixed;
-    bottom: 90px;
+    bottom: 100px;
     right: 20px;
-    width: 400px;
-    height: 600px;
+    width: 420px;
+    height: 650px;
     max-width: calc(100vw - 40px);
     max-height: calc(100vh - 120px);
     background: white;
-    border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(221, 41, 47, 0.4);
     z-index: 9999;
     display: none;
     flex-direction: column;
     overflow: hidden;
+    border: 4px solid #000;
+    font-family: 'Montserrat', sans-serif;
   `;
   
   container.innerHTML = `
     <div style="
-      background: rgb(124, 58, 237);
+      background: linear-gradient(135deg, #DD292F 0%, #FF5050 100%);
       color: white;
-      padding: 16px;
+      padding: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-radius: 16px 16px 0 0;
+      border-bottom: 4px solid #000;
     ">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 20px;">💬</span>
-        <span style="font-weight: 600;">Onboarding Assistant</span>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="
+          width: 40px;
+          height: 40px;
+          background: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 900;
+          color: #DD292F;
+          line-height: 1.2;
+          text-align: center;
+          border: 3px solid #000;
+        ">SHE<br/>IS<br/>AI</div>
+        <div>
+          <div style="font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px;">Ambassador Bot</div>
+          <div style="font-size: 11px; opacity: 0.9; font-weight: 500;">Ask me anything!</div>
+        </div>
       </div>
       <button id="chatkit-close-btn" style="
-        background: rgba(255,255,255,0.2);
-        border: none;
+        background: rgba(0,0,0,0.3);
+        border: 2px solid #000;
         color: white;
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
         cursor: pointer;
-        font-size: 20px;
+        font-size: 24px;
         display: flex;
         align-items: center;
         justify-content: center;
         line-height: 1;
+        font-weight: 700;
+        transition: all 0.2s;
       ">×</button>
     </div>
     
     <div id="chat-messages" style="
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 20px;
       background: #f8fafc;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
     "></div>
     
     <div style="
       padding: 16px;
-      border-top: 1px solid #e2e8f0;
+      border-top: 4px solid #000;
       background: white;
     ">
       <div style="display: flex; gap: 8px;">
         <input 
           id="chat-input"
           type="text" 
-          placeholder="Type your message..."
+          placeholder="Type your question..."
           style="
             flex: 1;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 10px 12px;
+            border: 3px solid #000;
+            border-radius: 12px;
+            padding: 12px 16px;
             font-size: 14px;
             outline: none;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
           "
         />
         <button id="chat-send" style="
-          background: rgb(124, 58, 237);
-          border: none;
+          background: linear-gradient(135deg, #DD292F 0%, #FF5050 100%);
+          border: 3px solid #000;
           color: white;
-          padding: 10px 16px;
-          border-radius: 8px;
+          padding: 12px 20px;
+          border-radius: 12px;
           cursor: pointer;
           font-size: 14px;
-          font-weight: 500;
+          font-weight: 700;
+          font-family: 'Montserrat', sans-serif;
+          text-transform: uppercase;
+          transition: all 0.2s;
+          box-shadow: 0 4px 0 #000;
         ">Send</button>
+      </div>
+      <div style="margin-top: 8px; text-align: center; font-size: 10px; color: #64748b; font-weight: 500;">
+        Powered by OpenAI
       </div>
     </div>
   `;
@@ -190,6 +220,25 @@ function createWidgetContainer() {
   document.getElementById('chat-input').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') sendMessage();
   });
+  
+  // Hover effects
+  const closeBtn = document.getElementById('chatkit-close-btn');
+  closeBtn.addEventListener('mouseenter', () => closeBtn.style.background = '#000');
+  closeBtn.addEventListener('mouseleave', () => closeBtn.style.background = 'rgba(0,0,0,0.3)');
+  
+  const sendBtn = document.getElementById('chat-send');
+  sendBtn.addEventListener('mouseenter', () => {
+    sendBtn.style.transform = 'translateY(2px)';
+    sendBtn.style.boxShadow = '0 2px 0 #000';
+  });
+  sendBtn.addEventListener('mouseleave', () => {
+    sendBtn.style.transform = 'translateY(0)';
+    sendBtn.style.boxShadow = '0 4px 0 #000';
+  });
+  
+  const input = document.getElementById('chat-input');
+  input.addEventListener('focus', () => input.style.borderColor = '#DD292F');
+  input.addEventListener('blur', () => input.style.borderColor = '#000');
 }
 
 function closeWidget() {
@@ -227,18 +276,21 @@ function renderMessages() {
       <div style="
         display: flex;
         justify-content: ${isUser ? 'flex-end' : 'flex-start'};
+        animation: slideIn 0.3s ease-out;
       ">
         <div style="
           max-width: 80%;
-          padding: 10px 14px;
-          border-radius: 12px;
-          background: ${isUser ? 'rgb(124, 58, 237)' : 'white'};
+          padding: 12px 16px;
+          border-radius: 16px;
+          background: ${isUser ? 'linear-gradient(135deg, #DD292F 0%, #FF5050 100%)' : 'white'};
           color: ${isUser ? 'white' : '#1e293b'};
           font-size: 14px;
-          line-height: 1.5;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+          line-height: 1.6;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          border: ${isUser ? '3px solid #000' : '3px solid #e2e8f0'};
+          font-weight: 500;
         ">
-          ${msg.content.replace(/\n/g, '<br>')}
+          ${msg.content.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}
         </div>
       </div>
     `;
@@ -249,13 +301,15 @@ function renderMessages() {
     container.innerHTML += `
       <div style="display: flex; justify-content: flex-start;">
         <div style="
-          padding: 10px 14px;
-          border-radius: 12px;
+          padding: 12px 16px;
+          border-radius: 16px;
           background: white;
           color: #64748b;
           font-size: 14px;
+          border: 3px solid #e2e8f0;
+          font-weight: 500;
         ">
-          <span style="animation: pulse 1.5s ease-in-out infinite;">Thinking...</span>
+          <span style="display: inline-block; animation: pulse 1.5s ease-in-out infinite;">Thinking...</span>
         </div>
       </div>
     `;

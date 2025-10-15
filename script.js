@@ -113,49 +113,48 @@ function createWidgetContainer() {
   
   container.innerHTML = `
     <div style="
-      background: linear-gradient(135deg, #DD292F 0%, #FF5050 100%);
+      background: #DD292F;
       color: white;
-      padding: 20px;
+      padding: 18px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 4px solid #000;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
     ">
-      <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
         <div style="
-          width: 40px;
-          height: 40px;
+          width: 36px;
+          height: 36px;
           background: white;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 11px;
+          font-size: 9px;
           font-weight: 900;
           color: #DD292F;
-          line-height: 1.2;
+          line-height: 1.1;
           text-align: center;
-          border: 3px solid #000;
         ">SHE<br/>IS<br/>AI</div>
         <div>
-          <div style="font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px;">Ambassador Bot</div>
-          <div style="font-size: 11px; opacity: 0.9; font-weight: 500;">Ask me anything!</div>
+          <div style="font-weight: 700; font-size: 15px; letter-spacing: 0.3px;">AMBASSADOR BOT</div>
+          <div style="font-size: 11px; opacity: 0.85; font-weight: 400;">Ask me anything!</div>
         </div>
       </div>
       <button id="chatkit-close-btn" style="
-        background: rgba(0,0,0,0.3);
-        border: 2px solid #000;
+        background: transparent;
+        border: none;
         color: white;
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         cursor: pointer;
-        font-size: 24px;
+        font-size: 28px;
         display: flex;
         align-items: center;
         justify-content: center;
         line-height: 1;
-        font-weight: 700;
+        font-weight: 400;
         transition: all 0.2s;
       ">×</button>
     </div>
@@ -164,15 +163,15 @@ function createWidgetContainer() {
       flex: 1;
       overflow-y: auto;
       padding: 20px;
-      background: #f8fafc;
+      background: #FAFAFA;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     "></div>
     
     <div style="
       padding: 16px;
-      border-top: 4px solid #000;
+      border-top: 1px solid #e5e7eb;
       background: white;
     ">
       <div style="display: flex; gap: 8px;">
@@ -182,31 +181,32 @@ function createWidgetContainer() {
           placeholder="Type your question..."
           style="
             flex: 1;
-            border: 3px solid #000;
-            border-radius: 12px;
-            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 24px;
+            padding: 12px 18px;
             font-size: 14px;
             outline: none;
             font-family: 'Montserrat', sans-serif;
-            font-weight: 500;
+            font-weight: 400;
+            transition: border-color 0.2s;
           "
         />
         <button id="chat-send" style="
-          background: linear-gradient(135deg, #DD292F 0%, #FF5050 100%);
-          border: 3px solid #000;
+          background: #DD292F;
+          border: none;
           color: white;
-          padding: 12px 20px;
-          border-radius: 12px;
+          padding: 12px 24px;
+          border-radius: 24px;
           cursor: pointer;
-          font-size: 14px;
-          font-weight: 700;
+          font-size: 13px;
+          font-weight: 600;
           font-family: 'Montserrat', sans-serif;
           text-transform: uppercase;
+          letter-spacing: 0.5px;
           transition: all 0.2s;
-          box-shadow: 0 4px 0 #000;
         ">Send</button>
       </div>
-      <div style="margin-top: 8px; text-align: center; font-size: 10px; color: #64748b; font-weight: 500;">
+      <div style="margin-top: 8px; text-align: center; font-size: 10px; color: #9ca3af; font-weight: 400;">
         Powered by OpenAI
       </div>
     </div>
